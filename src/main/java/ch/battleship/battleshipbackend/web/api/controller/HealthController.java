@@ -1,4 +1,4 @@
-package ch.battleship.battleshipbackend.api;
+package ch.battleship.battleshipbackend.web.api.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

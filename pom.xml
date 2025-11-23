@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>ch.battleship</groupId>
-    <artifactId>battleshipbackend</artifactId>
+    <artifactId>battleship-backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>battleship-backend</name>
     <description>battleship-backend</description>
