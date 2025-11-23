@@ -3,6 +3,7 @@ package ch.battleship.battleshipbackend.web.api.controller;
 import ch.battleship.battleshipbackend.service.GameService;
 
 import ch.battleship.battleshipbackend.domain.Game;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +19,7 @@ public class GameController {
     }
 
     // Neues Game anlegen
+    @Operation(summary = "Create a new game")
     @PostMapping
     public ResponseEntity<GameDto> createGame() {
         Game game = gameService.createNewGame();
@@ -25,6 +27,7 @@ public class GameController {
     }
 
     // Game per gameCode laden
+    @Operation(summary = "Get a game by its code")
     @GetMapping("/{gameCode}")
     public ResponseEntity<GameDto> getGame(@PathVariable String gameCode) {
         return gameService.getByGameCode(gameCode)
@@ -32,6 +35,7 @@ public class GameController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Join a game as a player")
     @PostMapping("/{gameCode}/join")
     public ResponseEntity<GameDto> joinGame(@PathVariable String gameCode,
                                             @RequestBody JoinGameRequest request) {
