@@ -1,12 +1,19 @@
 package ch.battleship.battleshipbackend.web.api.controller;
 
+import ch.battleship.battleshipbackend.domain.Shot;
 import ch.battleship.battleshipbackend.service.GameService;
 
 import ch.battleship.battleshipbackend.domain.Game;
+import ch.battleship.battleshipbackend.web.api.dto.GameDto;
+import ch.battleship.battleshipbackend.web.api.dto.JoinGameRequest;
+import ch.battleship.battleshipbackend.web.api.dto.ShotDto;
+import ch.battleship.battleshipbackend.web.api.dto.ShotRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/games")
@@ -46,6 +53,27 @@ public class GameController {
             return ResponseEntity.notFound().build();
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().build(); // später evtl. aussagekräftigere Fehler
+        }
+    }
+
+    @Operation(summary = "Fire a shot to a specific board")
+    @PostMapping("/{gameCode}/boards/{boardId}/shots")
+    public ResponseEntity<ShotDto> fireShot(@PathVariable String gameCode,
+                                            @PathVariable UUID boardId,
+                                            @RequestBody ShotRequest request) {
+        try {
+            Shot shot = gameService.fireShot(
+                    gameCode,
+                    request.shooterId(),
+                    boardId,
+                    request.x(),
+                    request.y()
+            );
+            return ResponseEntity.ok(ShotDto.from(shot));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().build();
         }
     }
 }

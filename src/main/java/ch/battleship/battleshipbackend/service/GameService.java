@@ -1,10 +1,7 @@
 package ch.battleship.battleshipbackend.service;
 
-import ch.battleship.battleshipbackend.domain.Board;
-import ch.battleship.battleshipbackend.domain.Game;
-import ch.battleship.battleshipbackend.domain.GameConfiguration;
+import ch.battleship.battleshipbackend.domain.*;
 import ch.battleship.battleshipbackend.domain.enums.GameStatus;
-import ch.battleship.battleshipbackend.domain.Player;
 import ch.battleship.battleshipbackend.repository.GameRepository;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -12,6 +9,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -36,13 +34,6 @@ public class GameService {
         return gameRepository.findByGameCode(gameCode);
     }
 
-    /**
-     * Spieler tritt einem Spiel bei.
-     * - Game muss existieren
-     * - Game muss im Status WAITING sein
-     * - Max. 2 Spieler
-     * - Beim 2. Spieler wechselt das Game in den Status RUNNING
-     */
     public Game joinGame(String gameCode, String username) {
         Game game = gameRepository.findByGameCode(gameCode)
                 .orElseThrow(() -> new EntityNotFoundException("Game not found: " + gameCode));
@@ -56,23 +47,94 @@ public class GameService {
             throw new IllegalStateException("Game already has 2 players");
         }
 
-        // neuen Player anlegen
         Player player = new Player(username);
         game.addPlayer(player);
 
-        // passendes Board für diesen Player erzeugen
-        int width = game.getConfig().getBoardWidth();
-        int height = game.getConfig().getBoardHeight();
-
-        Board board = new Board(width, height, player);
-
+        Board board = new Board(
+                game.getConfig().getBoardWidth(),
+                game.getConfig().getBoardHeight(),
+                player
+        );
         game.addBoard(board);
 
-        // zweiter Spieler startet das Game
         if (currentPlayers + 1 == 2) {
             game.setStatus(GameStatus.RUNNING);
         }
 
         return gameRepository.save(game);
     }
+
+    public Shot fireShot(String gameCode, UUID shooterId, UUID targetBoardId, int x, int y) {
+        Game game = gameRepository.findByGameCode(gameCode)
+                .orElseThrow(() -> new EntityNotFoundException("Game not found: " + gameCode));
+
+        if (game.getStatus() != GameStatus.RUNNING) {
+            throw new IllegalStateException("Cannot fire shot when game is not RUNNING");
+        }
+
+        Player shooter = game.getPlayers().stream()
+                .filter(p -> Objects.equals(p.getId(), shooterId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Shooter does not belong to this game"));
+
+        Board targetBoard = game.getBoards().stream()
+                .filter(b -> Objects.equals(b.getId(), targetBoardId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Board does not belong to this game"));
+
+        // Optional: verhindern, dass man auf das eigene Board schießt
+        if (Objects.equals(targetBoard.getOwner().getId(), shooterId)) {
+            throw new IllegalStateException("Player cannot shoot at own board");
+        }
+
+        // Bounds Check
+        if (x < 0 || x >= targetBoard.getWidth() ||
+                y < 0 || y >= targetBoard.getHeight()) {
+            throw new IllegalArgumentException("Shot coordinate out of board bounds");
+        }
+
+        Coordinate coordinate = new Coordinate(x, y);
+        Shot shot = game.fireShot(shooter, targetBoard, coordinate);
+
+        gameRepository.save(game); // Shots werden per Cascade mitgespeichert
+        return shot;
+    }
+
+    /*
+    public Shot fireShot(String gameCode, UUID shooterId, UUID targetBoardId, int x, int y) {
+        Game game = gameRepository.findByGameCode(gameCode)
+                .orElseThrow(() -> new EntityNotFoundException("Game not found: " + gameCode));
+
+        if (game.getStatus() != GameStatus.RUNNING) {
+            throw new IllegalStateException("Cannot fire shot when game is not RUNNING");
+        }
+
+        Player shooter = game.getPlayers().stream()
+                .filter(p -> p.getId().equals(shooterId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Shooter does not belong to this game"));
+
+        Board targetBoard = game.getBoards().stream()
+                .filter(b -> b.getId().equals(targetBoardId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Board does not belong to this game"));
+
+        // Optional: verhindern, dass man auf das eigene Board schießt
+        if (targetBoard.getOwner().getId().equals(shooterId)) {
+            throw new IllegalStateException("Player cannot shoot at own board");
+        }
+
+        // Bounds Check
+        if (x < 0 || x >= targetBoard.getWidth() ||
+                y < 0 || y >= targetBoard.getHeight()) {
+            throw new IllegalArgumentException("Shot coordinate out of board bounds");
+        }
+
+        Coordinate coordinate = new Coordinate(x, y);
+        Shot shot = game.fireShot(shooter, targetBoard, coordinate);
+
+        gameRepository.save(game); // Shots werden per Cascade mitgespeichert
+        return shot;
+    }
+     */
 }
