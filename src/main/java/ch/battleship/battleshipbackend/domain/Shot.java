@@ -3,6 +3,7 @@ package ch.battleship.battleshipbackend.domain;
 import ch.battleship.battleshipbackend.domain.common.BaseEntity;
 import ch.battleship.battleshipbackend.domain.enums.ShotResult;
 import jakarta.persistence.*;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

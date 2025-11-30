@@ -86,6 +86,24 @@ class GameShootingTest {
     }
 
     @Test
+    void fireShot_shouldReturnSunk_whenAllCoordinatesOfShipAreHit() {
+        // Arrange
+        Game game = createGameWithTwoPlayersAndOneBoardWithOneShip();
+        Player attacker = getAttacker(game);
+        Board defenderBoard = getDefenderBoard(game);
+
+        // Erstes Feld treffen
+        game.fireShot(attacker, defenderBoard, new Coordinate(3, 3));
+
+        // Zweites Feld treffen -> Schiff sollte versenkt sein
+        Shot shot2 = game.fireShot(attacker, defenderBoard, new Coordinate(4, 3));
+
+        // Assert
+        assertThat(shot2.getResult()).isEqualTo(ShotResult.SUNK);
+        assertThat(game.getShots()).hasSize(2);
+    }
+
+    @Test
     void fireShot_shouldReturnAlreadyShot_whenCoordinateWasShotBefore() {
         // Arrange
         Game game = createGameWithTwoPlayersAndOneBoardWithOneShip();
@@ -94,11 +112,11 @@ class GameShootingTest {
 
         Coordinate coord = new Coordinate(0, 0);
 
-        // erster Schuss
+        // Erster Schuss
         Shot first = game.fireShot(attacker, defenderBoard, coord);
         assertThat(first.getResult()).isEqualTo(ShotResult.MISS);
 
-        // Act: zweiter Schuss auf gleiche Koordinate
+        // Act: zweiter Schuss auf dieselbe Koordinate
         Shot second = game.fireShot(attacker, defenderBoard, coord);
 
         // Assert

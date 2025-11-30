@@ -4,10 +4,7 @@ import ch.battleship.battleshipbackend.domain.Shot;
 import ch.battleship.battleshipbackend.service.GameService;
 
 import ch.battleship.battleshipbackend.domain.Game;
-import ch.battleship.battleshipbackend.web.api.dto.GameDto;
-import ch.battleship.battleshipbackend.web.api.dto.JoinGameRequest;
-import ch.battleship.battleshipbackend.web.api.dto.ShotDto;
-import ch.battleship.battleshipbackend.web.api.dto.ShotRequest;
+import ch.battleship.battleshipbackend.web.api.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.ResponseEntity;
@@ -76,4 +73,19 @@ public class GameController {
             return ResponseEntity.badRequest().build();
         }
     }
+
+    @Operation(summary = "Get a specific board state ")
+    @GetMapping("/{gameCode}/boards/{boardId}/state")
+    public ResponseEntity<BoardStateDto> getBoardState(@PathVariable String gameCode,
+                                                       @PathVariable UUID boardId) {
+        try {
+            BoardStateDto state = gameService.getBoardState(gameCode, boardId);
+            return ResponseEntity.ok(state);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
 }
